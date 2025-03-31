@@ -182,6 +182,26 @@ const mockNetworks: Network[] = [
         tradingPairs: 4
       }
     ]
+  },
+  {
+    id: 'polygon',
+    name: 'Polygon',
+    type: 'evm',
+    rpcUrl: 'https://polygon-rpc.com',
+    chainId: '137',
+    status: 'disconnected',
+    blockHeight: 52384920,
+    dexes: [
+      {
+        id: 'quickswap',
+        name: 'QuickSwap',
+        protocol: 'UniswapV2',
+        routerAddress: '0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff',
+        status: 'inactive',
+        enabled: true,
+        tradingPairs: 0
+      }
+    ]
   }
 ];
 
@@ -319,7 +339,306 @@ const DexNetworks: React.FC = () => {
   
   return (
     <Box pt={5} pb={10}>
-      <Text>DEX Networks page</Text>
+      <VStack spacing={6} align="stretch">
+        <HStack justifyContent="space-between">
+          <Heading size="lg">DEX Networks</Heading>
+          <Button 
+            leftIcon={<FiPlus />} 
+            colorScheme="blue" 
+            onClick={() => {
+              toast({
+                title: "Not Implemented",
+                description: "Adding new networks is not yet implemented.",
+                status: "info",
+                duration: 3000,
+                isClosable: true,
+              });
+            }}
+          >
+            Add Network
+          </Button>
+        </HStack>
+        
+        <Tabs variant="enclosed">
+          <TabList>
+            {networks.map(network => (
+              <Tab key={network.id}>
+                <HStack>
+                  <Text>{network.name}</Text>
+                  <Badge colorScheme={networkStatusColors[network.status]}>
+                    {network.status}
+                  </Badge>
+                </HStack>
+              </Tab>
+            ))}
+          </TabList>
+          
+          <TabPanels>
+            {networks.map(network => (
+              <TabPanel key={network.id} p={4}>
+                <VStack spacing={6} align="stretch">
+                  {/* Network Details */}
+                  <Card variant="outline">
+                    <CardHeader>
+                      <HStack justifyContent="space-between">
+                        <Heading size="md">Network Configuration</Heading>
+                        <Button 
+                          leftIcon={<FiEdit />} 
+                          size="sm" 
+                          onClick={() => handleEditNetwork(network)}
+                        >
+                          Edit
+                        </Button>
+                      </HStack>
+                    </CardHeader>
+                    <CardBody>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
+                        <FormControl display="flex" alignItems="center">
+                          <FormLabel mb="0">Network Status</FormLabel>
+                          <Switch 
+                            colorScheme="green" 
+                            isChecked={network.status === 'connected'} 
+                            onChange={(e) => toggleNetwork(network.id, e.target.checked)}
+                          />
+                        </FormControl>
+                        
+                        <FormControl>
+                          <FormLabel>Chain ID</FormLabel>
+                          <Text>{network.chainId || 'N/A'}</Text>
+                        </FormControl>
+                        
+                        <FormControl>
+                          <FormLabel>RPC URL</FormLabel>
+                          <InputGroup>
+                            <Input 
+                              type={showRpcUrl[network.id] ? "text" : "password"} 
+                              value={network.rpcUrl} 
+                              isReadOnly
+                            />
+                            <InputRightElement>
+                              <IconButton
+                                aria-label="Toggle URL visibility"
+                                icon={showRpcUrl[network.id] ? <FiEyeOff /> : <FiEye />}
+                                size="sm"
+                                onClick={() => toggleRpcVisibility(network.id)}
+                              />
+                            </InputRightElement>
+                          </InputGroup>
+                        </FormControl>
+                        
+                        <FormControl>
+                          <FormLabel>Network Type</FormLabel>
+                          <Badge>{network.type === 'evm' ? 'EVM Compatible' : 'Solana'}</Badge>
+                        </FormControl>
+                        
+                        {network.gasPrice && (
+                          <FormControl>
+                            <FormLabel>Current Gas Price</FormLabel>
+                            <Text>{network.gasPrice}</Text>
+                          </FormControl>
+                        )}
+                        
+                        <FormControl>
+                          <FormLabel>Block Height</FormLabel>
+                          <Text>{network.blockHeight?.toLocaleString() || 'Unknown'}</Text>
+                        </FormControl>
+                        
+                        <Button 
+                          leftIcon={<FiActivity />} 
+                          colorScheme="blue" 
+                          variant="outline"
+                          onClick={() => handleTestConnection(network.id)}
+                        >
+                          Test Connection
+                        </Button>
+                      </SimpleGrid>
+                    </CardBody>
+                  </Card>
+                  
+                  {/* DEXes */}
+                  <Card variant="outline">
+                    <CardHeader>
+                      <HStack justifyContent="space-between">
+                        <Heading size="md">DEXes ({network.dexes.length})</Heading>
+                        <Button 
+                          leftIcon={<FiPlus />} 
+                          size="sm" 
+                          colorScheme="blue"
+                          onClick={() => handleAddDex(network.id)}
+                        >
+                          Add DEX
+                        </Button>
+                      </HStack>
+                    </CardHeader>
+                    <CardBody>
+                      {network.dexes.length === 0 ? (
+                        <Alert status="info">
+                          <AlertIcon />
+                          <AlertTitle mr={2}>No DEXes Configured</AlertTitle>
+                          <AlertDescription>
+                            Add a DEX to start configuring trading pairs.
+                          </AlertDescription>
+                        </Alert>
+                      ) : (
+                        <VStack spacing={3} align="stretch">
+                          {network.dexes.map(dex => (
+                            <Card 
+                              key={dex.id} 
+                              variant="outline" 
+                              borderColor={borderColor}
+                              bg={cardBg}
+                            >
+                              <CardBody>
+                                <SimpleGrid columns={{ base: 1, md: 12 }} spacing={4} alignItems="center">
+                                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                                    <Heading size="sm">{dex.name}</Heading>
+                                  </GridItem>
+                                  
+                                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                                    <VStack align="start" spacing={1}>
+                                      <Text fontSize="xs" color="gray.500">Protocol</Text>
+                                      <Text>{dex.protocol}</Text>
+                                    </VStack>
+                                  </GridItem>
+                                  
+                                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                                    <VStack align="start" spacing={1}>
+                                      <Text fontSize="xs" color="gray.500">Status</Text>
+                                      <Badge colorScheme={dexStatusColors[dex.status]}>
+                                        {dex.status}
+                                      </Badge>
+                                    </VStack>
+                                  </GridItem>
+                                  
+                                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                                    <VStack align="start" spacing={1}>
+                                      <Text fontSize="xs" color="gray.500">Trading Pairs</Text>
+                                      <Text>{dex.tradingPairs}</Text>
+                                    </VStack>
+                                  </GridItem>
+                                  
+                                  <GridItem colSpan={{ base: 1, md: 2 }}>
+                                    <Tooltip 
+                                      label={network.type === 'evm' ? 'Router Address' : 'Program ID'} 
+                                      placement="top"
+                                    >
+                                      <VStack align="start" spacing={1}>
+                                        <Text fontSize="xs" color="gray.500">
+                                          {network.type === 'evm' ? 'Router' : 'Program ID'}
+                                        </Text>
+                                        <Text fontSize="sm" noOfLines={1}>
+                                          {dex.routerAddress || dex.programId || 'N/A'}
+                                        </Text>
+                                      </VStack>
+                                    </Tooltip>
+                                  </GridItem>
+                                  
+                                  <GridItem colSpan={{ base: 1, md: 2 }} justifySelf="end">
+                                    <HStack spacing={2}>
+                                      <FormControl display="flex" alignItems="center" width="auto">
+                                        <Switch 
+                                          colorScheme="green" 
+                                          isChecked={dex.enabled} 
+                                          onChange={(e) => toggleDex(network.id, dex.id, e.target.checked)}
+                                          isDisabled={network.status !== 'connected'}
+                                        />
+                                        <FormLabel mb="0" ml={2} fontSize="sm">
+                                          {dex.enabled ? 'Enabled' : 'Disabled'}
+                                        </FormLabel>
+                                      </FormControl>
+                                      
+                                      <IconButton
+                                        aria-label="Edit DEX"
+                                        icon={<FiEdit />}
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          toast({
+                                            title: "Not Implemented",
+                                            description: "Editing DEX is not yet implemented.",
+                                            status: "info",
+                                            duration: 3000,
+                                            isClosable: true,
+                                          });
+                                        }}
+                                      />
+                                      
+                                      <IconButton
+                                        aria-label="View Trading Pairs"
+                                        icon={<FiSliders />}
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => {
+                                          toast({
+                                            title: "Not Implemented",
+                                            description: "Viewing trading pairs is not yet implemented.",
+                                            status: "info",
+                                            duration: 3000,
+                                            isClosable: true,
+                                          });
+                                        }}
+                                      />
+                                    </HStack>
+                                  </GridItem>
+                                </SimpleGrid>
+                              </CardBody>
+                            </Card>
+                          ))}
+                        </VStack>
+                      )}
+                    </CardBody>
+                  </Card>
+                </VStack>
+              </TabPanel>
+            ))}
+          </TabPanels>
+        </Tabs>
+      </VStack>
+      
+      {/* Edit Network Modal - Placeholder */}
+      <Modal isOpen={isEditNetworkOpen} onClose={onEditNetworkClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Edit {selectedNetwork?.name}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>Network editing functionality would go here.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onEditNetworkClose}>Cancel</Button>
+            <Button colorScheme="blue" ml={3}>Save Changes</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+      
+      {/* Add DEX Modal - Placeholder */}
+      <Modal isOpen={isAddDexOpen} onClose={onAddDexClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Add DEX to {selectedNetwork?.name}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>DEX creation form would go here.</Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button onClick={onAddDexClose}>Cancel</Button>
+            <Button colorScheme="blue" ml={3}>Add DEX</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
+  );
+};
+
+// GridItem component for SimpleGrid layout
+const GridItem: React.FC<{
+  children: React.ReactNode;
+  colSpan: { base: number; md: number };
+  [x: string]: any;
+}> = ({ children, colSpan, ...rest }) => {
+  return (
+    <Box gridColumn={`span ${colSpan.md} / span ${colSpan.md}`} {...rest}>
+      {children}
     </Box>
   );
 };
